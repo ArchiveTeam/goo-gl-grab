@@ -32,6 +32,7 @@ local expect_disallowed = false
 
 local discovered_outlinks = {}
 local discovered_items = {}
+local discovered_news = {}
 local bad_items = {}
 local ids = {}
 
@@ -76,7 +77,7 @@ end
 
 discover_item = function(target, item)
   if not target[item] then
---print('discovered', item)
+print('discovered', item)
     target[item] = true
     return true
   end
@@ -94,6 +95,7 @@ find_item = function(url)
     ["^https?://goo%.gl/forms/([0-9a-zA-Z]+)%?d=1$"]="g",
     ["^https?://goo%.gl/photos/([0-9a-zA-Z]+)%?d=1$"]="p",
     ["^https?://goo%.gl/maps/([0-9a-zA-Z]+)%?d=1$"]="m",
+    ["^https?://goo%.gl/news/([0-9a-zA-Z]+)%?d=1$"]="n",
     ["^https?://goo%.gl/alerts/([0-9a-zA-Z]+)%?d=1$"]="a",
     ["^https?://goo%.gl/fb/([0-9a-zA-Z]+)%?d=1$"]="f",
     ["^https?://goo%.gl/images/([0-9a-zA-Z]+)%?d=1$"]="im"
@@ -336,6 +338,39 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
     return result
   end
 
+  local function get_news_url(s)
+    results = {[s]=true}
+    for inner_url in string.gmatch(s .. "&", "[%?&]url=(https?[^&]+)") do
+      while string.match(inner_url, "^https?%%") do
+        local temp = urlparse.unescape(inner_url)
+        if temp == inner_url then
+          error("Could not unescape inner URL.")
+        end
+        inner_url = temp
+      end
+      if string.match(inner_url, "^https?://") then
+        for k, v in pairs(get_news_url(urlparse.unescape(inner_url))) do
+          results[k] = v
+        end
+      end
+    end
+    return results
+  end
+
+  local function queue_news(json)
+    for k, v in pairs(json) do
+      if type(v) == "string"
+        and string.match(v, "^https?") then
+        local param_url = get_news_url(v)
+        if param_url then
+          discover_item(discovered_news, urlparse.unescape(param_url))
+        end
+      elseif type(v) == "table" then
+        queue_news(v)
+      end
+    end
+  end
+
   if allowed(url)
     and status_code < 300 then
     html = read_file(file)
@@ -348,6 +383,17 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
         expect_disallowed = true
       else
         expect_disallowed = false
+      end
+      if string.match(url, "/news/") then
+        local json = cjson.decode(string.match(html, ">AF_initDataCallback%({key:[%s',:0-9a-z]-data:(%[.-%]),%s*sideChannel"))
+        if not json then
+          error("Could not extract JSON data.")
+        end
+        for newurl, _ in pairs(get_news_url(json[3])) do
+          if not string.match(newurl, "^https?://news%.google%.") then
+            discover_item(discovered_news, newurl)
+          end
+        end
       end
     end
     --[[if json then
@@ -559,7 +605,8 @@ wget.callbacks.finish = function(start_time, end_time, wall_time, numurls, total
   file:close()
   for key, data in pairs({
     --["goo-gl-"] = discovered_items,
-    --["urls-"] = discovered_outlinks
+    --["urls-"] = discovered_outlinks,
+    ["goo-gl-news-xpbxx8latirznfut"] = discovered_news
   }) do
     print('queuing for', string.match(key, "^(.+)%-"))
     local items = nil
