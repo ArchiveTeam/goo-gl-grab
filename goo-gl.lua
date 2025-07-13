@@ -34,6 +34,7 @@ local discovered_outlinks = {}
 local discovered_items = {}
 local discovered_news = {}
 local discovered_alerts = {}
+local discovered_images = {}
 local bad_items = {}
 local ids = {}
 
@@ -340,7 +341,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
   end
 
   local function get_news_url(s)
-    results = {[s]=true}
+    local results = {[s]=true}
     for inner_url in string.gmatch(s .. "&", "[%?&][a-z]*url=(https?[^&]+)") do
       while string.match(inner_url, "^https?%%") do
         local temp = urlparse.unescape(inner_url)
@@ -386,17 +387,19 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
         expect_disallowed = false
       end
       if string.match(url, "/news/")
-        or string.match(url, "/alerts/") then
+        or string.match(url, "/alerts/")
+        or string.match(url, "/images/") then
         local json = cjson.decode(string.match(html, ">AF_initDataCallback%({key:[%s',:0-9a-z]-data:(%[.-%]),%s*sideChannel"))
         if not json then
           error("Could not extract JSON data.")
         end
         for newurl, _ in pairs(get_news_url(json[3])) do
-          if not string.match(newurl, "^https?://news%.google%.") then
+          if not string.match(newurl, "^https?://[^/]+%.google%.") then
             discover_item(
               ({
                 ["news"]=discovered_news,
                 ["alerts"]=discovered_alerts,
+                ["images"]=discovered_images,
               })[string.match(url, "^https?://[^/]+/([a-z]+)")],
               newurl
             )
@@ -615,7 +618,8 @@ wget.callbacks.finish = function(start_time, end_time, wall_time, numurls, total
     --["goo-gl-"] = discovered_items,
     --["urls-"] = discovered_outlinks,
     ["goo-gl-news-xpbxx8latirznfut"] = discovered_news,
-    ["goo-gl-alerts-zqaa3uc1s3phzj2r"] = discovered_alerts
+    ["goo-gl-alerts-zqaa3uc1s3phzj2r"] = discovered_alerts,
+    ["goo-gl-images-gsr58xiv808heid1"] = discovered_images,
   }) do
     print('queuing for', string.match(key, "^(.+)%-"))
     local items = nil
