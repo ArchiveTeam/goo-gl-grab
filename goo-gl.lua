@@ -33,6 +33,7 @@ local expect_disallowed = false
 local discovered_outlinks = {}
 local discovered_items = {}
 local discovered_news = {}
+local discovered_alerts = {}
 local bad_items = {}
 local ids = {}
 
@@ -340,7 +341,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
 
   local function get_news_url(s)
     results = {[s]=true}
-    for inner_url in string.gmatch(s .. "&", "[%?&]url=(https?[^&]+)") do
+    for inner_url in string.gmatch(s .. "&", "[%?&][a-z]*url=(https?[^&]+)") do
       while string.match(inner_url, "^https?%%") do
         local temp = urlparse.unescape(inner_url)
         if temp == inner_url then
@@ -384,14 +385,21 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
       else
         expect_disallowed = false
       end
-      if string.match(url, "/news/") then
+      if string.match(url, "/news/")
+        or string.match(url, "/alerts/") then
         local json = cjson.decode(string.match(html, ">AF_initDataCallback%({key:[%s',:0-9a-z]-data:(%[.-%]),%s*sideChannel"))
         if not json then
           error("Could not extract JSON data.")
         end
         for newurl, _ in pairs(get_news_url(json[3])) do
           if not string.match(newurl, "^https?://news%.google%.") then
-            discover_item(discovered_news, newurl)
+            discover_item(
+              ({
+                ["news"]=discovered_news,
+                ["alerts"]=discovered_alerts,
+              })[string.match(url, "^https?://[^/]+/([a-z]+)")],
+              newurl
+            )
           end
         end
       end
@@ -606,7 +614,8 @@ wget.callbacks.finish = function(start_time, end_time, wall_time, numurls, total
   for key, data in pairs({
     --["goo-gl-"] = discovered_items,
     --["urls-"] = discovered_outlinks,
-    ["goo-gl-news-xpbxx8latirznfut"] = discovered_news
+    ["goo-gl-news-xpbxx8latirznfut"] = discovered_news,
+    ["goo-gl-alerts-zqaa3uc1s3phzj2r"] = discovered_alerts
   }) do
     print('queuing for', string.match(key, "^(.+)%-"))
     local items = nil
