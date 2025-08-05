@@ -372,7 +372,8 @@ project = Project(
         <img class="project-logo" alt="Project logo" src="https://wiki.archiveteam.org/images/3/32/Google-icon.webp" height="50px" title=""/>
         <h2>goo.gl <span class="links"><a href="https://goo.gl/">Website</a> &middot; <a href="http://tracker.archiveteam.org/goo-gl/">Leaderboard</a> &middot; <a href="https://wiki.archiveteam.org/index.php/goo.gl">Wiki</a></span></h2>
         <p>Archiving goo.gl.</p>
-    '''
+    ''',
+    utc_deadline = datetime.datetime(2025,08,25, 0,0,0)
 )
 
 pipeline = Pipeline(
