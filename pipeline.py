@@ -77,7 +77,7 @@ if not WGET_AT:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = '20250805.02'
+VERSION = '20250805.03'
 USER_AGENT = 'Mozilla/5.0 (X11; Linux i686; rv:124.0) Gecko/20100101 Firefox/124.0'
 TRACKER_ID = 'goo-gl'
 TRACKER_HOST = 'legacy-api.arpa.li'
@@ -370,7 +370,7 @@ project = Project(
     title=TRACKER_ID,
     project_html='''
         <img class="project-logo" alt="Project logo" src="https://wiki.archiveteam.org/images/3/32/Google-icon.webp" height="50px" title=""/>
-        <h2>goo.gl <span class="links"><a href="https://goo.gl/">Website</a> &middot; <a href="http://tracker.archiveteam.org/goo-gl/">Leaderboard</a> &middot; <a href="https://wiki.archiveteam.org/index.php/goo.gl">Wiki</a></span></h2>
+        <h2>goo.gl <span class="links"><a href="https://goo.gl/">Website</a> &middot; <a href="https://tracker.archiveteam.org/goo-gl/">Leaderboard</a> &middot; <a href="https://wiki.archiveteam.org/index.php/goo.gl">Wiki</a></span></h2>
         <p>Archiving goo.gl.</p>
     ''',
     utc_deadline = datetime.datetime(2025, 8,25, 0, 0, 0)
@@ -378,7 +378,7 @@ project = Project(
 
 pipeline = Pipeline(
     CheckIP(),
-    GetItemFromTracker('http://{}/{}/multi={}/'
+    GetItemFromTracker('https://{}/{}/multi={}/'
         .format(TRACKER_HOST, TRACKER_ID, MULTI_ITEM_SIZE),
         downloader, VERSION),
     PrepareDirectories(warc_prefix=TRACKER_ID),
@@ -409,7 +409,7 @@ pipeline = Pipeline(
         name='shared:rsync_threads', title='Rsync threads',
         description='The maximum number of concurrent uploads.'),
         UploadWithTracker(
-            'http://%s/%s' % (TRACKER_HOST, TRACKER_ID),
+            'https://%s/%s' % (TRACKER_HOST, TRACKER_ID),
             downloader=downloader,
             version=VERSION,
             files=[
@@ -426,7 +426,7 @@ pipeline = Pipeline(
         ),
     ),
     MaybeSendDoneToTracker(
-        tracker_url='http://%s/%s' % (TRACKER_HOST, TRACKER_ID),
+        tracker_url='https://%s/%s' % (TRACKER_HOST, TRACKER_ID),
         stats=ItemValue('stats')
     )
 )
