@@ -471,6 +471,7 @@ wget.callbacks.write_to_warc = function(url, http_stat)
     if string.match(newloc, "^https?://[^/]*google%.[^%./]+/sorry")
       --[[or string.match(newloc, "^https://accounts%.google%.com")]] then
       print("Google asks for a login, sleeping 20 minutes.")
+      io.stdout:flush()
       os.execute("sleep 1200")
       retry_url = true
       return false
