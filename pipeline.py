@@ -77,7 +77,7 @@ if not WGET_AT:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = '20250805.01'
+VERSION = '20250805.02'
 USER_AGENT = 'Mozilla/5.0 (X11; Linux i686; rv:124.0) Gecko/20100101 Firefox/124.0'
 TRACKER_ID = 'goo-gl'
 TRACKER_HOST = 'legacy-api.arpa.li'
@@ -373,7 +373,7 @@ project = Project(
         <h2>goo.gl <span class="links"><a href="https://goo.gl/">Website</a> &middot; <a href="http://tracker.archiveteam.org/goo-gl/">Leaderboard</a> &middot; <a href="https://wiki.archiveteam.org/index.php/goo.gl">Wiki</a></span></h2>
         <p>Archiving goo.gl.</p>
     ''',
-    utc_deadline = datetime.datetime(2025,08,25, 0,0,0)
+    utc_deadline = datetime.datetime(2025, 8,25, 0, 0, 0)
 )
 
 pipeline = Pipeline(
