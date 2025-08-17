@@ -399,7 +399,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
       check(path .. "?si=1")
       if string.match(html, "dynamic link has [0-9]+ error")
         and (
-          string.match(html, "Target url .+ is disallowed%.")
+          string.match(html, "is disallowed%.")
           or string.match(html, "We could not match param .+ with whitelisted URL patterns")
         ) then
         print("This is a disallowed shortened URL.")
