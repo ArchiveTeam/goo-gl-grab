@@ -397,7 +397,11 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
       local path = string.match(url, "^([^%?]+)%?")
       check(path)
       check(path .. "?si=1")
-      if string.match(html, "is disallowed%.") then
+      if string.match(html, "dynamic link has [0-9]+ error")
+        and (
+          string.match(html, "Target url .+ is disallowed%.")
+          or string.match(html, "We could not match param .+ with whitelisted URL patterns")
+        ) then
         print("This is a disallowed shortened URL.")
         expect_disallowed = true
       else
@@ -409,7 +413,11 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
         local json = get_redirect_data(html)
         local raw_news_urls = nil
         if expect_disallowed then
-          raw_news_url = string.match(json[1][1][2], "^Target url '([^']+)'")
+          local _, count = string.gsub(json[1][1][2], "'", "")
+          if count ~= 2 then
+            error("Found " .. tostring(count) .. "occurences of '.")
+          end
+          raw_news_url = string.match(json[1][1][2], "'([^']+)'")
         else
           raw_news_url = json[3]
         end
