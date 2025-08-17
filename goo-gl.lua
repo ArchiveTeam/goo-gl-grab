@@ -407,7 +407,13 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
         or string.match(url, "/alerts/")
         or string.match(url, "/images/") then
         local json = get_redirect_data(html)
-        for newurl, _ in pairs(get_news_url(json[3])) do
+        local raw_news_urls = nil
+        if expect_disallowed then
+          raw_news_url = string.match(json[1][1][2], "^Target url '([^']+)'")
+        else
+          raw_news_url = json[3]
+        end
+        for newurl, _ in pairs(get_news_url(raw_news_url)) do
           if not string.match(newurl, "^https?://[^/]+%.google%.") then
             discover_item(
               ({
