@@ -401,6 +401,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
         and (
           string.match(html, "is disallowed%.")
           or string.match(html, "We could not match param .+ with whitelisted URL patterns")
+          or string.match(html, "is over the allowed limit of 7168%.")
         ) then
         print("This is a disallowed shortened URL.")
         expect_disallowed = true
@@ -507,9 +508,9 @@ wget.callbacks.write_to_warc = function(url, http_stat)
   end
   local matched_pattern = false
   for pattern, codes in pairs({
-    ["^[^%?]+$"]={200,302,400},
+    ["^[^%?]+$"]={200,302,400,500},
     ["%?d=1$"]={200},
-    ["%?si=1$"]={302,400},
+    ["%?si=1$"]={302,400,500},
     ["^https?://[^/]+/imgres%?"]={302,200}
   }) do
     if string.match(url["url"], pattern) then
@@ -518,7 +519,10 @@ wget.callbacks.write_to_warc = function(url, http_stat)
       for _, code in pairs(codes) do
         if status_code == code
           and (
-            code ~= 400
+            (
+              code ~= 400
+              and code ~= 500
+            )
             or expect_disallowed
           ) then
           good_code = true
