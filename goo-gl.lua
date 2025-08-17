@@ -135,7 +135,7 @@ set_item = function(url)
     end
     if item_name_new ~= item_name then
       ids = {}
-      context = {}
+      context = {["expect_sorry"]=false}
       --ids[item_value] = true
       abortgrab = false
       tries = 0
@@ -224,6 +224,14 @@ percent_encode_url = function(newurl)
     end
   )
   return result
+end
+
+get_redirect_data = function(s)
+  local json = cjson.decode(string.match(s, ">AF_initDataCallback%({key:[%s',:0-9a-z]-data:(%[.-%]),%s*sideChannel"))
+  if not json then
+    error("Could not extract JSON data.")
+  end
+  return json
 end
 
 wget.callbacks.get_urls = function(file, url, is_css, iri)
@@ -398,10 +406,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
       if string.match(url, "/news/")
         or string.match(url, "/alerts/")
         or string.match(url, "/images/") then
-        local json = cjson.decode(string.match(html, ">AF_initDataCallback%({key:[%s',:0-9a-z]-data:(%[.-%]),%s*sideChannel"))
-        if not json then
-          error("Could not extract JSON data.")
-        end
+        local json = get_redirect_data(html)
         for newurl, _ in pairs(get_news_url(json[3])) do
           if not string.match(newurl, "^https?://[^/]+%.google%.") then
             discover_item(
@@ -466,9 +471,18 @@ wget.callbacks.write_to_warc = function(url, http_stat)
     and string.match(url["url"], "%?d=1$") then
     return false
   end
+  if http_stat["statcode"] == 200
+    and string.match(url["url"], "%?d=1$") then
+    local json = get_redirect_data(read_file(http_stat["local_file"]))
+    if json[3] and string.match(json[3], "^https?://[^/]*google%.[^%./]+/sorry") then
+      print("Found redirect to sorry page. Accepting sorry page.")
+      context["expect_sorry"] = string.match(url["url"], "([0-9a-zA-Z]+)%?")
+    end
+  end
   if status_code >= 300 and status_code <= 399 then
     local newloc = urlparse.absolute(url["url"], http_stat["newloc"])
     if string.match(newloc, "^https?://[^/]*google%.[^%./]+/sorry")
+      and context["expect_sorry"] ~= string.match(url["url"], "^https?://[^/]+/([0-9a-zA-Z]+)")
       --[[or string.match(newloc, "^https://accounts%.google%.com")]] then
       print("Google asks for a login, sleeping 20 minutes.")
       io.stdout:flush()
