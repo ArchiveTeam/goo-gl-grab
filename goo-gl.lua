@@ -364,9 +364,11 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
     for inner_url in string.gmatch(s .. "&", "[%?&][a-z]*url=(https?[^&]+)") do
       while string.match(inner_url, "^https?%%") do
         local temp = urlparse.unescape(inner_url)
-        if temp == inner_url then
+        -- rare, allowing
+        --[[if temp == inner_url then
+          print(inner_url, s)
           error("Could not unescape inner URL.")
-        end
+        end]]
         inner_url = temp
       end
       if string.match(inner_url, "^https?://") then
