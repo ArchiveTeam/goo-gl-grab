@@ -513,6 +513,14 @@ wget.callbacks.write_to_warc = function(url, http_stat)
     end
   end
   local matched_pattern = false
+  if string.match(url["url"], "^[^%?]+$")
+    and status_code == 400 then
+    local html = read_file(http_stat["local_file"])
+    if string.match(html, "URL includes illegal chara?cter") then
+      expect_disallowed = true
+      print("URL contains illegal character.")
+    end
+  end
   for pattern, codes in pairs({
     ["^[^%?]+$"]={200,302,400,500},
     ["%?d=1$"]={200},
