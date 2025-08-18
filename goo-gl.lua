@@ -521,9 +521,9 @@ wget.callbacks.write_to_warc = function(url, http_stat)
     end
   end
   for pattern, codes in pairs({
-    ["^[^%?]+$"]={200,302,400,500},
+    ["^[^%?]+$"]={200,301,302,400,500},
     ["%?d=1$"]={200},
-    ["%?si=1$"]={302,400,500},
+    ["%?si=1$"]={301,302,400,500},
     ["^https?://[^/]+/imgres%?"]={302,200,400}
   }) do
     if string.match(url["url"], pattern) then
