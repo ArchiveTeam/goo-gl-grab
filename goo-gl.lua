@@ -165,6 +165,10 @@ allowed = function(url, parenturl)
     return true
   end
 
+  if string.match(url, "^https?://[^/:]+:25557/") then
+    return false
+  end
+
   if string.match(url, "^https?://[^/]*google[^/]+/imgres%?")
     and (
       not parenturl
@@ -174,12 +178,14 @@ allowed = function(url, parenturl)
     return true
   end
 
-  for _, pattern in pairs({
-    "([a-z0-9A-Z]+)",
-  }) do
-    for s in string.gmatch(url, pattern) do
-      if ids[s] then
-        return true
+  if string.match(url, "^https?://[^/]*goo%.gl/") then
+    for _, pattern in pairs({
+      "([a-z0-9A-Z]+)",
+    }) do
+      for s in string.gmatch(url, pattern) do
+        if ids[s] then
+          return true
+        end
       end
     end
   end
@@ -511,7 +517,7 @@ wget.callbacks.write_to_warc = function(url, http_stat)
     ["^[^%?]+$"]={200,302,400,500},
     ["%?d=1$"]={200},
     ["%?si=1$"]={302,400,500},
-    ["^https?://[^/]+/imgres%?"]={302,200}
+    ["^https?://[^/]+/imgres%?"]={302,200,400}
   }) do
     if string.match(url["url"], pattern) then
       matched_pattern = true
@@ -524,6 +530,10 @@ wget.callbacks.write_to_warc = function(url, http_stat)
               and code ~= 500
             )
             or expect_disallowed
+            or (
+              pattern == "^https?://[^/]+/imgres%?"
+              and code == 400
+            )
           ) then
           good_code = true
         end
