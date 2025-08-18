@@ -165,7 +165,7 @@ allowed = function(url, parenturl)
     return true
   end
 
-  if string.match(url, "^https?://images%.google%.cn/imgres%?") then
+  if string.match(url, "^https?://[^%.]+%.google%.cn/imgres%?") then
     return false
   end
 
@@ -519,6 +519,14 @@ wget.callbacks.write_to_warc = function(url, http_stat)
       return false
     end
   end
+  local current_id = string.match(url["url"], "^https?://goo%.gl/[^%?]-([0-9a-zA-Z]+)")
+  if current_id == "search"
+    or current_id == "sbwz"
+    or current_id == "cordz" then
+    retry_url = false
+    tries = 0
+    return true
+  end
   local matched_pattern = false
   if string.match(url["url"], "^[^%?]+$")
     and status_code == 400 then
@@ -606,6 +614,11 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
 
   if abortgrab then
     abort_item()
+    return wget.actions.EXIT
+  end
+
+  if string.match(url["url"], "^([^%?]+)") == "https://goo.gl/images/mECm5S"
+    and status_code == 302 then
     return wget.actions.EXIT
   end
 
