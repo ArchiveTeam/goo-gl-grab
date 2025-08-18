@@ -165,6 +165,10 @@ allowed = function(url, parenturl)
     return true
   end
 
+  if string.match(url, "^https?://images%.google%.cn/imgres%?") then
+    return false
+  end
+
   if string.match(url, "^https?://[^/]*google[^/]+/imgres%?")
     and (
       not parenturl
@@ -428,6 +432,10 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
           raw_news_url = json[3]
         end
         for newurl, _ in pairs(get_news_url(raw_news_url)) do
+          if not string.match(newurl .. "/", "^https?://[%[%]%%0-9a-zA-Z%.%-_:]+/") then
+            expect_disallowed = true
+            print("Invalid URL found.")
+          end
           if not string.match(newurl, "^https?://[^/]+%.google%.") then
             discover_item(
               ({
