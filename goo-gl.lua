@@ -165,10 +165,6 @@ allowed = function(url, parenturl)
     return true
   end
 
-  if string.match(url, "^https?://[^/:]+:25557/") then
-    return false
-  end
-
   if string.match(url, "^https?://[^/]*google[^/]+/imgres%?")
     and (
       not parenturl
@@ -599,6 +595,11 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
 
   if abortgrab then
     abort_item()
+    return wget.actions.EXIT
+  end
+
+  if status_code == 0
+    and string.match(url["url"], "^https?://[^/:]+:[0-9]+/") then
     return wget.actions.EXIT
   end
 
