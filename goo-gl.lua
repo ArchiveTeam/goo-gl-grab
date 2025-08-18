@@ -417,10 +417,10 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
         local raw_news_urls = nil
         if expect_disallowed then
           local _, count = string.gsub(json[1][1][2], "'", "")
-          if count ~= 2 then
-            error("Found " .. tostring(count) .. "occurences of '.")
-          end
-          raw_news_url = string.match(json[1][1][2], "'([^']+)'")
+          --[[if count ~= 2 then
+            error("Found " .. tostring(count) .. " occurences of '.")
+          end]]
+          raw_news_url = string.match(json[1][1][2], "'(.+)'")
         else
           raw_news_url = json[3]
         end
