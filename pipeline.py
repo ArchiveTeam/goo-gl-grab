@@ -77,7 +77,7 @@ if not WGET_AT:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = '20250818.09'
+VERSION = '20250824.01'
 USER_AGENT = 'Mozilla/5.0 (X11; Linux i686; rv:124.0) Gecko/20100101 Firefox/124.0'
 TRACKER_ID = 'goo-gl'
 TRACKER_HOST = 'legacy-api.arpa.li'
@@ -339,7 +339,8 @@ class WgetArgs(object):
                 'im': 'images',
                 'm': 'maps',
                 'n': 'news',
-                'p': 'photos'
+                'p': 'photos',
+                'b': 'b'
             }
             if item_type in mapping:
                 mapped = mapping[item_type]
@@ -347,6 +348,10 @@ class WgetArgs(object):
                 for item_id in self.enumerate_ids(item_value):
                     wget_args.extend(['--warc-header', 'goo-gl-{}: {}'.format(warc_header, item_id)])
                     wget_args.append('https://goo.gl/'+mapped+('/' if len(mapped) > 0 else '')+item_id+'?d=1')
+            elif item_type == 'app':
+                app_name, id_ = item_value.split(':', 1)
+                wget_args.extend(['--warc-header', 'goo-gl-app-{}: {}'.format(app_name, id_)])
+                wget_args.append('https://{}.app.goo.gl/{}?d=1'.format(app_name, id_))
             else:
                 raise Exception('Unknown item')
 

@@ -35,6 +35,7 @@ local discovered_items = {}
 local discovered_news = {}
 local discovered_alerts = {}
 local discovered_images = {}
+local discovered_b = {}
 local bad_items = {}
 local ids = {}
 
@@ -100,7 +101,9 @@ find_item = function(url)
     ["^https?://goo%.gl/news/([0-9a-zA-Z]+)%?d=1$"]="n",
     ["^https?://goo%.gl/alerts/([0-9a-zA-Z]+)%?d=1$"]="a",
     ["^https?://goo%.gl/fb/([0-9a-zA-Z]+)%?d=1$"]="f",
-    ["^https?://goo%.gl/images/([0-9a-zA-Z]+)%?d=1$"]="im"
+    ["^https?://goo%.gl/images/([0-9a-zA-Z]+)%?d=1$"]="im",
+    ["^https?://goo%.gl/b/([0-9a-zA-Z]+)%?d=1$"]="b",
+    ["^https?://([^%.]+%.app%.goo%.gl/[0-9a-zA-Z]+)%?d=1$"]="app",
   }) do
     value = string.match(url, pattern)
     type_ = name
@@ -120,6 +123,9 @@ set_item = function(url)
   found = find_item(url)
   if found then
     item_name_single_new = found["type"] .. ":" .. found["value"]
+    if found["type"] == "app" then
+      item_name_single_new = string.gsub(item_name_single_new, "%.app%.goo%.gl/", ":")
+    end
     item_name_new = nil
     for pattern, s in pairs(item_names) do
       if string.match(item_name_single_new, pattern) then
@@ -130,7 +136,11 @@ set_item = function(url)
       end
     end
     if item_name_new then
-      ids[found["value"]] = true
+      if found["type"] == "app" then
+        ids[string.match(found["value"], "([0-9a-zA-Z]+)$")] = true
+      else
+        ids[found["value"]] = true
+      end
       expect_disallowed = false
     end
     if item_name_new ~= item_name then
@@ -419,7 +429,8 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
       end
       if string.match(url, "/news/")
         or string.match(url, "/alerts/")
-        or string.match(url, "/images/") then
+        or string.match(url, "/images/")
+        or string.match(url, "/b/") then
         local json = get_redirect_data(html)
         local raw_news_urls = nil
         if expect_disallowed then
@@ -442,6 +453,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
                 ["news"]=discovered_news,
                 ["alerts"]=discovered_alerts,
                 ["images"]=discovered_images,
+                ["b"]=discovered_b
               })[string.match(url, "^https?://[^/]+/([a-z]+)")],
               newurl
             )
@@ -707,6 +719,7 @@ wget.callbacks.finish = function(start_time, end_time, wall_time, numurls, total
     ["goo-gl-news-xpbxx8latirznfut"] = discovered_news,
     ["goo-gl-alerts-zqaa3uc1s3phzj2r"] = discovered_alerts,
     ["goo-gl-images-gsr58xiv808heid1"] = discovered_images,
+    ["goo-gl-b-kqsvkbslnj37910v"] = discovered_b
   }) do
     print('queuing for', string.match(key, "^(.+)%-"))
     local items = nil
